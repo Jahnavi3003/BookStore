@@ -1,91 +1,86 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   ScrollView,
-  Text, StyleSheet, View, TouchableOpacity, TextInput, Image
+  Text, StyleSheet, View, TouchableOpacity, TextInput, Image, FlatList
 } from 'react-native';
 import TopBar from '../components/TopBar'
 import logo from '../assets/Book1.png'
 import logo1 from '../assets/Book2.jpeg'
 import logo2 from '../assets/Book3.png'
 import logo3 from '../assets/Book4.jpeg'
+import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { addToCart } from '../redux/Action';
+const Home = ({ navigation }) => {
 
-const Home = ({navigation}) => {
+  const [info, setInfo] = useState([]);
+  const [btn, setBtn] = useState(true);
+
+  const getData = async () => {
+    const books = await axios.get('http://localhost:4003/book')
+    .then(res => setInfo(res?.data))
+   
+  }
+  const dispatch = useDispatch();
+  const addItem = (item) => {
+      dispatch(addToCart(item));
+  }
+
+  useEffect(() => {
+    getData()
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
       <TopBar navigation={navigation} />
       <Text style={styles.text}>Books</Text>
-      <ScrollView>
-        <View style={{ flexDirection: 'row' }}>
-          <View style={styles.box}>
-            <Image source={logo} style={styles.logo} />
-            <View style={{ backgroundColor: 'white' }}>
-              <Text style={styles.title}>Cinderella</Text>
-              <Text style={styles.price}>Rs 1500</Text>
-              <View style={{ alignItems: 'center', alignContent: 'center', marginLeft: 20 }}>
-                <TouchableOpacity>
-                  <Text style={styles.btn1}> ADD TO BAG</Text>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                  <Text style={styles.btn2}> WISHLIST</Text>
-                </TouchableOpacity>
+      <View>
+        <FlatList
+          data={info}
+          key={item => item.id}
+          numColumns={2}
+          keyExtractor={(item, index) => {
+            // console.log("index", index)
+            return index.toString();
+          }}
+          renderItem={({ item, index }) => {
+            return (
+
+              <View style={styles.box}>
+                <Image source={{ uri: item.imageUrl }} style={styles.logo} />
+                <View style={{ backgroundColor: 'white' }}>
+
+                  <Text style={styles.title}>{item.bookName}</Text>
+                  <Text style={styles.author}>{item.author}</Text>
+                  <Text style={styles.price}>Rs {item.price}</Text>
+                  {btn ?
+                    <View style={{ alignItems: 'center', alignContent: 'center', marginLeft: 20 }}>
+                      <TouchableOpacity onPress={
+                        () => {setBtn(!btn) ; () =>addItem(item) ;}}>
+                        <Text style={styles.btn1}> ADD TO BAG</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity>
+                        <Text style={styles.btn2}> WISHLIST</Text>
+                      </TouchableOpacity>
+                    </View> :
+                    <View style={{ alignItems: 'center', alignContent: 'center', marginLeft: 20 }}>
+                      <TouchableOpacity onPress={() => navigation.navigate('AddBook')}>
+                        <Text style={styles.btn3}> ADDED TO BAG</Text>
+                      </TouchableOpacity>
+                    </View>
+                  }
+                </View>
               </View>
-            </View>
-          </View>
-
-          <View style={styles.box}>
-            <Image source={logo1} style={styles.logo} />
-            <View style={{ backgroundColor: 'white' }}>
-              <Text style={styles.title}>Panchatantra</Text>
-              <Text style={styles.price}>Rs 500</Text>
-              <View style={{ alignItems: 'center', alignContent: 'center', marginLeft: 20 }}>
-                <TouchableOpacity>
-                  <Text style={styles.btn1}> ADD TO BAG</Text>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                  <Text style={styles.btn2}> WISHLIST</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-
-        </View>
-        <View style={{flexDirection:'row'}}>
-        <View style={styles.box}>
-          <Image source={logo2} style={styles.logo} />
-          <View style={{ backgroundColor: 'white' }}>
-            <Text style={styles.title}>Rapunzel</Text>
-            <Text style={styles.price}>Rs 1000</Text>
-            <View style={{ alignItems: 'center', alignContent: 'center', marginLeft: 20 }}>
-              <TouchableOpacity>
-                <Text style={styles.btn1}> ADD TO BAG</Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={styles.btn2}> WISHLIST</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.box}>
-          <Image source={logo3} style={styles.logo} />
-          <View style={{ backgroundColor: 'white' }}>
-            <Text style={styles.title}>Arabian Nights</Text>
-            <Text style={styles.price}>Rs 1000</Text>
-            <View style={{ alignItems: 'center', alignContent: 'center', marginLeft: 20 }}>
-              <TouchableOpacity>
-                <Text style={styles.btn1}> ADD TO BAG</Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={styles.btn2}> WISHLIST</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        </View>
-      </ScrollView>
+            )
+          }}
+        />
+      </View>
+      <View>
+        <TouchableOpacity style={styles.add} onPress={()=> navigation.navigate('AddBook')}>
+        <Text style={{textAlign: 'center', color: 'white'}}>Add Book</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -93,10 +88,10 @@ const Home = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     //  flex:1, 
-    marginTop: 20,
+    marginTop: 5,
   },
   text: {
-    marginTop: 10,
+    marginTop: 5,
     fontSize: 25,
     color: 'black',
   },
@@ -105,9 +100,15 @@ const styles = StyleSheet.create({
     height: 120,
     marginTop: 10,
     marginLeft: 30,
-    borderColor:'black',
-    borderWidth:1
-  //  marginBottom: 20
+    borderColor: 'black',
+    borderWidth: 1
+    //  marginBottom: 20
+  },
+  add: {
+    width: 80,
+    height: 20,
+    backgroundColor: '#a52a2a',
+    marginLeft: 150
   },
   btn1: {
     color: 'white',
@@ -121,19 +122,31 @@ const styles = StyleSheet.create({
     padding: 5
   },
   title: {
-    fontSize: 15, 
-    marginTop: 20, 
+    fontSize: 13,
+    marginTop: 5,
     marginLeft: 10,
-    fontWeight:'bold'
+    fontWeight: 'bold'
   },
   btn2: {
     color: 'black',
     borderColor: 'black',
     borderWidth: 1,
     width: 80,
-    height: 25,
+    height: 20,
     marginRight: 20,
-    padding: 4
+    padding: 2
+  },
+  btn3: {
+    color: 'white',
+    backgroundColor: '#327ba8',
+    borderWidth: 1,
+    width: 120,
+    height: 45,
+    marginRight: 20,
+    marginTop:5,
+    padding:5,
+    paddingTop: 8,
+    fontSize:14
   },
   box: {
     margin: 18,
@@ -148,6 +161,11 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginLeft: 10,
     fontWeight: 'bold'
+  },
+  author: {
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 10,
   }
 
 })
